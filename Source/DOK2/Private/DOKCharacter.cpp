@@ -1,6 +1,7 @@
 #include "DOKCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -18,18 +19,23 @@ ADOKCharacter::ADOKCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCamera->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 0.f, 64.f));
-	FirstPersonCamera->bUsePawnControlRotation = true;
+	// Third person: a spring arm holds the camera behind and over the right
+	// shoulder, follows the mouse, and pulls in when something is in the way
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(GetCapsuleComponent());
+	CameraBoom->TargetArmLength = 350.f;
+	CameraBoom->SocketOffset = FVector(0.f, 60.f, 70.f);
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 12.f;
 
-	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
-	ArmsMesh->SetupAttachment(FirstPersonCamera);
-	ArmsMesh->SetOnlyOwnerSee(true);
-	ArmsMesh->CastShadow = false;
-	ArmsMesh->bCastDynamicShadow = false;
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false;
 
-	GetMesh()->SetOwnerNoSee(true);
+	// Full body mesh, feet on the floor, facing the capsule's forward
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 }
 
 void ADOKCharacter::BeginPlay()

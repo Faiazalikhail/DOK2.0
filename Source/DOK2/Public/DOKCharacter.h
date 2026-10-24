@@ -5,6 +5,7 @@
 #include "DOKCharacter.generated.h"
 
 class UCameraComponent;
+class USpringArmComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -25,10 +26,10 @@ protected:
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> FirstPersonCamera;
+	TObjectPtr<USpringArmComponent> CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> ArmsMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCameraComponent> FollowCamera;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
