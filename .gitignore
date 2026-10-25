@@ -73,3 +73,9 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Claude Code local settings
+.claude/
+
+# level reference images (kept locally, not in git)
+Documentation/LevelReference/
