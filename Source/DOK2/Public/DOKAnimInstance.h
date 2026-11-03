@@ -41,6 +41,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
 	float AimPitch = 0.0f;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
+	float DrawProgress = 0.0f;
+
 private:
 
 	UPROPERTY()

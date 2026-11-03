@@ -2,6 +2,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/PoseableMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
@@ -13,7 +14,7 @@
 
 ADOKCharacter::ADOKCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 
@@ -40,7 +41,7 @@ ADOKCharacter::ADOKCharacter()
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
-	SlingshotMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SlingshotMesh"));
+	SlingshotMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("SlingshotMesh"));
 	SlingshotMesh->SetupAttachment(GetMesh(), TEXT("SlingshotSocket"));
 	SlingshotMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -87,6 +88,9 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 		EnhancedInput->BindAction(AimAction, ETriggerEvent::Started, this, &ADOKCharacter::StartAim);
 		EnhancedInput->BindAction(AimAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopAim);
+
+		EnhancedInput->BindAction(FireAction, ETriggerEvent::Started, Slingshot.Get(), &USlingshotComponent::StartDraw);
+		EnhancedInput->BindAction(FireAction, ETriggerEvent::Completed, Slingshot.Get(), &USlingshotComponent::Release);
 	}
 }
 
@@ -143,4 +147,25 @@ void ADOKCharacter::UpdateMoveSpeed()
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+}
+
+void ADOKCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdatePouch();
+}
+
+// Update the slingshot pouch position based on the character's hand position and the band also streches with the draw progress
+
+void ADOKCharacter::UpdatePouch() 
+{
+	if (Slingshot->IsRaised()) 
+	{
+		const FVector Pinch = GetMesh()->GetSocketLocation(TEXT("PouchSocket"));
+		SlingshotMesh->SetBoneLocationByName(TEXT("Pouch"), Pinch, EBoneSpaces::WorldSpace);
+	}
+	else
+	{
+		SlingshotMesh->ResetBoneTransformByName(TEXT("Pouch"));
+	}
 }

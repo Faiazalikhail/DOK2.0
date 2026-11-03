@@ -43,6 +43,7 @@ void UDOKAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		const float Target = Slingshot->IsRaised() ? 1.0f : 0.0f;
 		SlingAlpha = FMath::FInterpTo(SlingAlpha, Target, DeltaSeconds, 10.0f);
+		DrawProgress = Slingshot->GetDrawProgress();
 	}
 
 	// Camera pitch as -180..180 instead of 0..360, so the aim offset can use it
