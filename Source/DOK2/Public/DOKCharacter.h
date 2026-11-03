@@ -8,6 +8,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputMappingContext;
 class UInputAction;
+class USkeletalMeshComponent;
+class USlingshotComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -52,8 +54,26 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float SprintSpeed = 700.f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slingshot", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> SlingshotMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slingshot", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USlingshotComponent> Slingshot;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> AimAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float AimWalkSpeed = 250.f;
+
+	bool bWantsToSprint = false;
+
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StartSprint();
 	void StopSprint();
+
+	void StartAim();
+	void StopAim();
+	void UpdateMoveSpeed();
 };

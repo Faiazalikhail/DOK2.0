@@ -1,6 +1,7 @@
 #include "DOKCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
@@ -8,6 +9,7 @@
 #include "InputActionValue.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
+#include "SlingshotComponent.h"
 
 ADOKCharacter::ADOKCharacter()
 {
@@ -37,13 +39,19 @@ ADOKCharacter::ADOKCharacter()
 	// Full body mesh, feet on the floor, facing the capsule's forward
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+
+	SlingshotMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SlingshotMesh"));
+	SlingshotMesh->SetupAttachment(GetMesh(), TEXT("SlingshotSocket"));
+	SlingshotMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	Slingshot = CreateDefaultSubobject<USlingshotComponent>(TEXT("Slingshot"));
 }
 
 void ADOKCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	UpdateMoveSpeed();
 
 	UE_LOG(LogTemp, Warning, TEXT("DOKCharacter spawned: %s"), *GetName());
 }
@@ -76,6 +84,9 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &ADOKCharacter::StartSprint);
 		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopSprint);
+
+		EnhancedInput->BindAction(AimAction, ETriggerEvent::Started, this, &ADOKCharacter::StartAim);
+		EnhancedInput->BindAction(AimAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopAim);
 	}
 }
 
@@ -97,10 +108,39 @@ void ADOKCharacter::Look(const FInputActionValue& Value)
 
 void ADOKCharacter::StartSprint()
 {
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	bWantsToSprint = true;
+	UpdateMoveSpeed();
 }
 
 void ADOKCharacter::StopSprint()
 {
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	bWantsToSprint = false;
+	UpdateMoveSpeed();
+}
+
+void ADOKCharacter::StartAim()
+{
+	Slingshot->Raise();
+	UpdateMoveSpeed();
+}
+
+void ADOKCharacter::StopAim()
+{
+	Slingshot->Lower();
+	UpdateMoveSpeed();
+}
+
+void ADOKCharacter::UpdateMoveSpeed()
+{
+	float NewSpeed = WalkSpeed;
+	if (Slingshot->IsRaised()) 
+	{
+		NewSpeed = AimWalkSpeed;
+	}
+	else if (bWantsToSprint) 
+	{
+		NewSpeed = SprintSpeed;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
 }

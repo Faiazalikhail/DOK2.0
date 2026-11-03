@@ -9,6 +9,7 @@
 
 class ACharacter;
 class UCharacterMovementComponent;
+class USlingshotComponent;
 
 UCLASS()
 class DOK2_API UDOKAnimInstance : public UAnimInstance
@@ -34,6 +35,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsFalling = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
+	float SlingAlpha = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
+	float AimPitch = 0.0f;
+
 private:
 
 	UPROPERTY()
@@ -41,6 +48,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UCharacterMovementComponent> Movement;
+
+	UPROPERTY()
+	TObjectPtr<USlingshotComponent> Slingshot;
 
 
 	
