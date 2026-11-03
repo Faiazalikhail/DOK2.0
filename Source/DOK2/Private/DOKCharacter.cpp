@@ -2,6 +2,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -42,6 +43,8 @@ void ADOKCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
 	UE_LOG(LogTemp, Warning, TEXT("DOKCharacter spawned: %s"), *GetName());
 }
 
@@ -70,6 +73,9 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &ADOKCharacter::StartSprint);
+		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopSprint);
 	}
 }
 
@@ -87,4 +93,14 @@ void ADOKCharacter::Look(const FInputActionValue& Value)
 
 	AddControllerYawInput(Input.X);
 	AddControllerPitchInput(Input.Y);
+}
+
+void ADOKCharacter::StartSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+}
+
+void ADOKCharacter::StopSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
