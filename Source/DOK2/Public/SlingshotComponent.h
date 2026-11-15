@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SlingshotComponent.generated.h"
 
+class ADOKStone;
 
 UENUM(BlueprintType)
 enum class ESlingshotState : uint8	
@@ -64,6 +65,22 @@ private:
 	void StopDrawing();
 
 	void SetState(ESlingshotState NewState);
+
+
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	TSubclassOf<ADOKStone> StoneClass;
+
+	// Shot speed at a tiny draw and at full draw (cm/s)
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	float MinShotSpeed = 1000.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	float MaxShotSpeed = 4000.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	float AimTraceDistance = 10000.f;
+
+	void Fire();
 
 
 };

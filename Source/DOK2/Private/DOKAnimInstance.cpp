@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "SlingshotComponent.h"
+#include "Components/PoseableMeshComponent.h"
 
 void UDOKAnimInstance::NativeInitializeAnimation()
 {
@@ -16,6 +17,7 @@ void UDOKAnimInstance::NativeInitializeAnimation()
 	{
 		Movement = Character->GetCharacterMovement();
 		Slingshot = Character->FindComponentByClass<USlingshotComponent>();
+		SlingshotMesh = Character->FindComponentByClass<UPoseableMeshComponent>();
 	}
 }
 
@@ -48,4 +50,36 @@ void UDOKAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// Camera pitch as -180..180 instead of 0..360, so the aim offset can use it
 	AimPitch = FRotator::NormalizeAxis(Character->GetBaseAimRotation().Pitch);
+
+	UpdateRightHand();
+
+}
+
+// Puts the right hand on the pouch and pulls it straight back as the draw grows
+void UDOKAnimInstance::UpdateRightHand()
+{
+	if(!SlingshotMesh)
+	{
+		return;
+	}
+
+	const FTransform SlingTransform = SlingshotMesh->GetComponentTransform();
+
+	// where the slack pouch is, and the direction from the fork back towards the shooter
+
+	const FVector PouchRest = SlingTransform.TransformPosition(PouchRestOffset);
+
+
+	// IK moves the right hand bone
+
+	USkeletalMeshComponent* Body = GetSkelMeshComponent();
+	// Full draw ends at the cheek, under the aiming eye, like a real slingshot shot
+	const FVector Anchor = Body->GetBoneLocation(TEXT("head")) + Character->GetActorTransform().TransformVectorNoScale(AnchorOffset);
+	const FVector Pinch = FMath::Lerp(PouchRest, Anchor, DrawProgress);
+
+	const FVector PinchOffset = Body->GetSocketLocation(TEXT("PouchSocket")) - Body->GetBoneLocation(TEXT("hand_r"));
+	RightHandTarget = Pinch - PinchOffset;
+
+	// Elbow out to the right and slightly back, like drawing a bow
+	RightElbowTarget = Body->GetBoneLocation(TEXT("upperarm_r")) + Character->GetActorRightVector() * 40.f - Character->GetActorForwardVector() * 20.f;
 }

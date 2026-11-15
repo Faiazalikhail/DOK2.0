@@ -10,6 +10,7 @@
 class ACharacter;
 class UCharacterMovementComponent;
 class USlingshotComponent;
+class UPoseableMeshComponent;
 
 UCLASS()
 class DOK2_API UDOKAnimInstance : public UAnimInstance
@@ -44,6 +45,21 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
 	float DrawProgress = 0.0f;
 
+	// World Space Points the TwoBoneIK node puts the right hand and elbow on
+	UPROPERTY(BlueprintReadOnly, Category = "SlingShot")
+	FVector RightHandTarget = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly, Category = "SlingShot")
+	FVector RightElbowTarget = FVector::ZeroVector;
+
+	// Full-draw anchor beside the right cheek, measured from the head bone (X forward, Y right, Z up)
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	FVector AnchorOffset = FVector(10.f, 8.f, 0.f);
+
+	//Where the pouch sits on SK_Slingshot When the bands are slack
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	FVector PouchRestOffset = FVector(0.0f, 18.8f, 15.7f);
+
 private:
 
 	UPROPERTY()
@@ -54,6 +70,11 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<USlingshotComponent> Slingshot;
+
+	UPROPERTY()
+	TObjectPtr<UPoseableMeshComponent> SlingshotMesh;
+
+	void UpdateRightHand();
 
 
 	

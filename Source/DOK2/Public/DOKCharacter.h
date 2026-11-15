@@ -70,6 +70,28 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float AimWalkSpeed = 250.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float NormalArmLength = 350.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	FVector NormalSocketOffset = FVector(0.f, 60.f, 70.f);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float NormalFOV = 90.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float AimArmLength = 75.f;
+
+	// Measured from the spine pivot, not the capsule centre
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	FVector AimSocketOffset = FVector(0.f, 45.f, 40.f);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float AimFOV = 70.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float CameraBlendSpeed = 10.f;
+
 	bool bWantsToSprint = false;
 
 	void Move(const FInputActionValue& Value);
@@ -81,4 +103,5 @@ private:
 	void StopAim();
 	void UpdateMoveSpeed();
 	void UpdatePouch();
+	void UpdateCamera(float DeltaSeconds);
 };

@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "SlingshotComponent.h"
+#include "Camera/PlayerCameraManager.h"
 
 ADOKCharacter::ADOKCharacter()
 {
@@ -27,8 +28,8 @@ ADOKCharacter::ADOKCharacter()
 	// shoulder, follows the mouse, and pulls in when something is in the way
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetCapsuleComponent());
-	CameraBoom->TargetArmLength = 350.f;
-	CameraBoom->SocketOffset = FVector(0.f, 60.f, 70.f);
+	CameraBoom->TargetArmLength = NormalArmLength;
+	CameraBoom->SocketOffset = NormalSocketOffset;
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 12.f;
@@ -63,6 +64,10 @@ void ADOKCharacter::NotifyControllerChanged()
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
+		// Limit looking up and down so the spine bend stays believable
+		PlayerController->PlayerCameraManager->ViewPitchMin = -50.f;
+		PlayerController->PlayerCameraManager->ViewPitchMax = 50.f;
+
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
@@ -153,6 +158,7 @@ void ADOKCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	UpdatePouch();
+	UpdateCamera(DeltaSeconds);
 }
 
 // Update the slingshot pouch position based on the character's hand position and the band also streches with the draw progress
@@ -168,4 +174,27 @@ void ADOKCharacter::UpdatePouch()
 	{
 		SlingshotMesh->ResetBoneTransformByName(TEXT("Pouch"));
 	}
+}
+
+// Aiming: the camera turns around the same spine joint the AnimBP bends, so body and view move together
+void ADOKCharacter::UpdateCamera(float DeltaSeconds)
+{
+	const bool bAiming = Slingshot->IsRaised();
+
+	// Where spine_03 is, seen from the capsule (the spring arm's parent)
+	const FVector SpinePivot = GetCapsuleComponent()->GetComponentTransform().InverseTransformPosition(
+		GetMesh()->GetBoneLocation(TEXT("spine_03")));
+
+	const FVector TargetPivot = bAiming ? SpinePivot : FVector::ZeroVector;
+	const float TargetLength = bAiming ? AimArmLength : NormalArmLength;
+	const FVector TargetOffset = bAiming ? AimSocketOffset : NormalSocketOffset;
+	const float TargetFOV = bAiming ? AimFOV : NormalFOV;
+
+	CameraBoom->SetRelativeLocation(FMath::VInterpTo(CameraBoom->GetRelativeLocation(), TargetPivot, DeltaSeconds, CameraBlendSpeed));
+	CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetLength, DeltaSeconds, CameraBlendSpeed);
+	CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaSeconds, CameraBlendSpeed);
+	FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, CameraBlendSpeed));
+
+	// Lag makes the camera trail the body; while aiming it must be locked to it
+	CameraBoom->bEnableCameraLag = !bAiming;
 }
