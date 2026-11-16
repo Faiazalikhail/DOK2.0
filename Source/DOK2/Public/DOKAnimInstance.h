@@ -76,6 +76,4 @@ private:
 
 	void UpdateRightHand();
 
-
-	
 };

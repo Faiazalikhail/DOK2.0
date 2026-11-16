@@ -196,5 +196,5 @@ void ADOKCharacter::UpdateCamera(float DeltaSeconds)
 	FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, CameraBlendSpeed));
 
 	// Lag makes the camera trail the body; while aiming it must be locked to it
-	CameraBoom->bEnableCameraLag = !bAiming;
+	//CameraBoom->bEnableCameraLag = !bAiming;
 }
