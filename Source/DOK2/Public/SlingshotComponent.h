@@ -33,6 +33,8 @@ public:
 	void StartDraw();
 	void Release();
 
+	bool GetAimRay(FVector& OutStart, FVector& OutDirection) const;
+
 	UFUNCTION(BlueprintPure, Category = "Slingshot")
 	ESlingshotState GetState() const { return State; }
 
@@ -79,6 +81,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
 	float AimTraceDistance = 10000.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	FVector ForkOffset = FVector(0.0f, 0.0f, 15.7f);
 
 	void Fire();
 

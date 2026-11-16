@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "Engine/Canvas.h"
 #include "DOKGameHUD.generated.h"
 
 /**
@@ -16,5 +17,28 @@ class DOK2_API ADOKGameHUD : public AHUD
 
 public:
 	virtual void BeginPlay() override;
+
+	virtual void DrawHUD() override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Corsshair")
+	TObjectPtr<UTexture2D> CrosshairDotTexture;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Corsshair")
+	TObjectPtr<UTexture2D> CrosshairRingTexture;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
+	float DotScale = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
+	float RingMaxScale = 0.6f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
+	float RingMinScale = 0.14f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
+	float AimTraceDistance = 10000.0f;
+
+	bool GetReticlePosition(FVector2D& OutScreenPosition) const;
+	void DrawAt(UTexture2D* Texture, float Scale, const FVector2D& ScreenPosition);
 	
 };

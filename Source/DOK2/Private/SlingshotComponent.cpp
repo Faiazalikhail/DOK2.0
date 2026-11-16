@@ -113,30 +113,11 @@ void USlingshotComponent::Fire()
 	{
 		return;
 	}
-	APlayerController* PlayerController = Cast<APlayerController>(Shooter->GetController());
-	if (!PlayerController)
-	{
-		return;
-	}
 
-	// 1. Find what the middle of the screen is pointing at
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
-	const FVector TraceEnd = CameraLocation + CameraRotation.Vector() * AimTraceDistance;
+	FVector Start;
+	FVector Direction;
+	if (!GetAimRay(Start, Direction)) return;
 
-	FHitResult Hit;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(Shooter);
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, CameraLocation, TraceEnd, ECC_Visibility, Params);
-	const FVector AimPoint = bHit ? Hit.ImpactPoint : TraceEnd;
-
-	// 2. The stone leaves from the pouch and flies toward that point
-	UPoseableMeshComponent* SlingMesh = Shooter->FindComponentByClass<UPoseableMeshComponent>();
-	const FVector Start = SlingMesh ? SlingMesh->GetBoneLocationByName(TEXT("Pouch"), EBoneSpaces::WorldSpace) : CameraLocation;
-	const FVector Direction = (AimPoint - Start).GetSafeNormal();
-
-	// 3. A longer draw means a faster shot
 	const float Speed = FMath::Lerp(MinShotSpeed, MaxShotSpeed, DrawProgress);
 
 	FActorSpawnParameters SpawnParams;
@@ -148,4 +129,17 @@ void USlingshotComponent::Fire()
 	{
 		Stone->Launch(Direction * Speed);
 	}
+}
+
+bool USlingshotComponent::GetAimRay(FVector& OutStart, FVector& OutDirection) const
+{
+	const AActor* Owner = GetOwner();
+	UPoseableMeshComponent* SlingMesh = Owner ? Owner->FindComponentByClass<UPoseableMeshComponent>() : nullptr;
+
+	if (!SlingMesh) return false;
+	OutStart = SlingMesh->GetBoneLocationByName(TEXT("Pouch"), EBoneSpaces::WorldSpace);
+	const FVector Fork = SlingMesh->GetComponentTransform().TransformPosition(ForkOffset);
+	OutDirection = (Fork - OutStart).GetSafeNormal();
+
+	return !OutDirection.IsNearlyZero();
 }
