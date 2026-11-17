@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "Engine/Canvas.h"
+#include "GUI/DOKPauseMenuWidget.h"
 #include "DOKGameHUD.generated.h"
 
 /**
@@ -37,6 +38,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
 	float AimTraceDistance = 10000.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UDOKPauseMenuWidget> PauseMenuWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UDOKPauseMenuWidget> PauseMenuWidgetContainer;
+
+	void ShowPauseMenu();
+	void HidePauseMenu();
+	bool IsPauseMenuOpen() const { return PauseMenuWidgetContainer != nullptr; }
 
 	bool GetReticlePosition(FVector2D& OutScreenPosition) const;
 	void DrawAt(UTexture2D* Texture, float Scale, const FVector2D& ScreenPosition);

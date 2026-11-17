@@ -34,6 +34,7 @@ void UDOKAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Speed = Velocity.Size2D();
 	VerticalSpeed = Velocity.Z;
 	bIsFalling = Movement->IsFalling();
+	bIsCrouching = Movement->IsCrouching();
 
 	//Velocity is seen from the character: x is forward and y is right
 

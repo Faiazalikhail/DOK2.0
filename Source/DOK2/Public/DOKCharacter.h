@@ -10,6 +10,7 @@ class UInputMappingContext;
 class UInputAction;
 class UPoseableMeshComponent;
 class USlingshotComponent;
+class UTraversalComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -61,6 +62,18 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slingshot", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USlingshotComponent> Slingshot;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UTraversalComponent> Traversal;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> CrouchAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> PauseAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float CrouchSpeed = 225.f;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> AimAction;
 
@@ -96,6 +109,9 @@ private:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void JumpPressed();
+	void ToggleCrouch();
+	void PauseGame();
 	void StartSprint();
 	void StopSprint();
 

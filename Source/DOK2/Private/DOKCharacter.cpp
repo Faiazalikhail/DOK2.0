@@ -11,6 +11,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "SlingshotComponent.h"
+#include "TraversalComponent.h"
+#include "HUD/DOKGameHUD.h"
 #include "Camera/PlayerCameraManager.h"
 
 ADOKCharacter::ADOKCharacter()
@@ -47,6 +49,11 @@ ADOKCharacter::ADOKCharacter()
 	SlingshotMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	Slingshot = CreateDefaultSubobject<USlingshotComponent>(TEXT("Slingshot"));
+
+	Traversal = CreateDefaultSubobject<UTraversalComponent>(TEXT("Traversal"));
+
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 }
 
 void ADOKCharacter::BeginPlay()
@@ -85,8 +92,11 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADOKCharacter::Move);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADOKCharacter::Look);
 
-		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ADOKCharacter::JumpPressed);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		EnhancedInput->BindAction(CrouchAction, ETriggerEvent::Started, this, &ADOKCharacter::ToggleCrouch);
+		EnhancedInput->BindAction(PauseAction, ETriggerEvent::Started, this, &ADOKCharacter::PauseGame);
 
 		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Started, this, &ADOKCharacter::StartSprint);
 		EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopSprint);
@@ -101,6 +111,8 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 void ADOKCharacter::Move(const FInputActionValue& Value)
 {
+	if (Traversal->IsTraversing()) return;
+
 	const FVector2D Input = Value.Get<FVector2D>();
 
 	AddMovementInput(GetActorForwardVector(), Input.Y);
@@ -113,6 +125,56 @@ void ADOKCharacter::Look(const FInputActionValue& Value)
 
 	AddControllerYawInput(Input.X);
 	AddControllerPitchInput(Input.Y);
+}
+
+// Jump first tries to vault or mantle whatever is in front, and only jumps if nothing is in the way
+void ADOKCharacter::JumpPressed()
+{
+	if (Traversal->IsTraversing()) return;
+
+	if (bIsCrouched)
+	{
+		UnCrouch();
+		return;
+	}
+
+	if (Traversal->TryTraverse())
+	{
+		if (Slingshot->IsRaised())
+		{
+			StopAim();
+		}
+		return;
+	}
+
+	// A wall in front with no top in reach can't be climbed, so the press is ignored instead of jumping into it
+	if (Traversal->IsWallAhead()) return;
+
+	Jump();
+}
+
+void ADOKCharacter::ToggleCrouch()
+{
+	if (Traversal->IsTraversing()) return;
+
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Crouch();
+	}
+}
+
+void ADOKCharacter::PauseGame()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	ADOKGameHUD* HUD = PC ? PC->GetHUD<ADOKGameHUD>() : nullptr;
+	if (HUD)
+	{
+		HUD->ShowPauseMenu();
+	}
 }
 
 void ADOKCharacter::StartSprint()

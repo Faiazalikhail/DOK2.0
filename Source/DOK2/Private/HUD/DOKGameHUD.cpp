@@ -32,6 +32,38 @@ void ADOKGameHUD::DrawHUD()
 	DrawAt(CrosshairDotTexture, DotScale, ReticlePosition);
 }
 
+void ADOKGameHUD::ShowPauseMenu()
+{
+	if (!PauseMenuWidgetClass || PauseMenuWidgetContainer) return;
+
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC) return;
+
+	PauseMenuWidgetContainer = CreateWidget<UDOKPauseMenuWidget>(PC, PauseMenuWidgetClass);
+	if (!PauseMenuWidgetContainer) return;
+
+	PauseMenuWidgetContainer->AddToViewport();
+
+	PC->SetPause(true);
+	PC->SetInputMode(FInputModeUIOnly());
+	PC->SetShowMouseCursor(true);
+}
+
+void ADOKGameHUD::HidePauseMenu()
+{
+	if (!PauseMenuWidgetContainer) return;
+
+	PauseMenuWidgetContainer->RemoveFromParent();
+	PauseMenuWidgetContainer = nullptr;
+
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC) return;
+
+	PC->SetPause(false);
+	PC->SetInputMode(FInputModeGameOnly());
+	PC->SetShowMouseCursor(false);
+}
+
 bool ADOKGameHUD::GetReticlePosition(FVector2D& OutScreenPosition) const
 {
 	APlayerController* PC = GetOwningPlayerController();

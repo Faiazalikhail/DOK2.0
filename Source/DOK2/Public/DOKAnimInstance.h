@@ -36,6 +36,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsFalling = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bIsCrouching = false;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Slingshot")
 	float SlingAlpha = 0.0f;
 
