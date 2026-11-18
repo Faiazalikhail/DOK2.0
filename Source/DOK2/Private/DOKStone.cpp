@@ -4,6 +4,7 @@
 #include "DOKStone.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ADOKStone::ADOKStone()
@@ -15,6 +16,7 @@ ADOKStone::ADOKStone()
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->InitSphereRadius(3.0f);
 	Collision->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+	Collision->OnComponentHit.AddDynamic(this, &ADOKStone::OnHitCalled);
 	RootComponent = Collision;
 
 	
@@ -51,4 +53,23 @@ void ADOKStone::Launch(const FVector& Velocity)
 	// Don't collide with the person who fired it
 	Collision->IgnoreActorWhenMoving(GetInstigator(), true);
 	Movement->Velocity = Velocity;
+}
+
+void ADOKStone::OnHitCalled(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+{
+	// only the first thing the stone touches should count as a hit (rolling stones on the floor were hurting the zombies
+
+	if (bHasHit) return;
+	bHasHit = true;
+
+	if (!OtherActor || OtherActor == GetInstigator()) return;
+
+	UGameplayStatics::ApplyPointDamage(OtherActor, Damage, -Hit.ImpactNormal, Hit, GetInstigatorController(), this, UDamageType::StaticClass());
+
+	// stone that hits a zombe should vanish
+
+	if(Cast<APawn>(OtherActor))
+	{
+		Destroy();
+	}
 }

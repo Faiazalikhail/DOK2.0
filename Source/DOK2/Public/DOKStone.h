@@ -27,6 +27,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditDefaultsOnly, Category ="Stone")
+	float Damage = 50.0f;
+
+	UFUNCTION()
+	void OnHitCalled(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Stone")
 	TObjectPtr<USphereComponent> Collision;
@@ -36,6 +42,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Stone")
 	TObjectPtr<UProjectileMovementComponent> Movement;
+
+	bool bHasHit = false;
 
 
 };
