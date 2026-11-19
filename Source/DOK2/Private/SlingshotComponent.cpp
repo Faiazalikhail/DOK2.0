@@ -6,6 +6,8 @@
 #include "Components/PoseableMeshComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 // Sets default values for this component's properties
 USlingshotComponent::USlingshotComponent()
@@ -95,8 +97,17 @@ void USlingshotComponent::Release()
 	Fire();
 
 	StopDrawing();
-	// Pouch is empty now; the next RMB press (Lower, then Raise) reloads it
 	SetState(ESlingshotState::Realoading);
+	GetWorld()->GetTimerManager().SetTimer(ReloadHandle, this, &USlingshotComponent::FinishReload, ReloadTime, false);
+}
+
+void USlingshotComponent::FinishReload()
+{
+	// Aim was let go during the reload
+	if (State == ESlingshotState::Realoading)
+	{
+		SetState(ESlingshotState::Raised);
+	}
 }
 
 void USlingshotComponent::StopDrawing()

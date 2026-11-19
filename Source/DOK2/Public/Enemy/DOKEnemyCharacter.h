@@ -64,7 +64,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
 	float AttackHitDelay = 0.5f;
 
+	// The player is out of reach when standing higher or lower than this
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
+	float AttackHeight = 100.0f;
+
 	virtual void DealAttackDamage();
+
+	bool IsPlayerInReach(AActor* Player, float Range) const;
+
+	void PlayEnemyMontage(UAnimMontage* Montage);
+
+	UFUNCTION()
+	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Animation")
 	TObjectPtr<UAnimMontage> DetectMontage;
@@ -80,6 +91,8 @@ private:
 	FVector LastHitDirection = FVector::ZeroVector;
 
 	FTimerHandle AttackHandle;
+
+	bool bChasing = false;
 
 	void StartCrawling();
 };

@@ -44,7 +44,8 @@ void UDOKAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 0 = lowered, 1 = raised, eased so the arms rise instead of snapping
 	if (Slingshot)
 	{
-		const float Target = Slingshot->IsRaised() ? 1.0f : 0.0f;
+		const bool bArmsUp = Slingshot->IsRaised() && Slingshot->GetState() != ESlingshotState::Realoading;
+		const float Target = bArmsUp ? 1.0f : 0.0f;
 		SlingAlpha = FMath::FInterpTo(SlingAlpha, Target, DeltaSeconds, 10.0f);
 		DrawProgress = Slingshot->GetDrawProgress();
 	}

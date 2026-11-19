@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
+#include "HUD/DOKGameHUD.h"
 
 // Sets default values
 ADOKEnemyCharacter::ADOKEnemyCharacter()
@@ -26,6 +27,10 @@ ADOKEnemyCharacter::ADOKEnemyCharacter()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+
+	// The player's camera arm should not treat zombies as walls, it snaps into their body
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 // Called when the game starts or when spawned
@@ -37,6 +42,11 @@ void ADOKEnemyCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeedCrouched = CrawlSpeed;
 
 	HealthComponent->OnDied.AddDynamic(this, &ADOKEnemyCharacter::HandleDied);
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &ADOKEnemyCharacter::OnMontageBlendingOut);
+	}
 }
 
 float ADOKEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -54,7 +64,8 @@ float ADOKEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 	}
 
 	const FString Bone = LastHitBone.ToString().ToLower();
-	if (Bone.Contains(TEXT("head")) || Bone.Contains(TEXT("neck")))
+	const bool bHeadshot = Bone.Contains(TEXT("head")) || Bone.Contains(TEXT("neck"));
+	if (bHeadshot)
 	{
 		DamageAmount = HealthComponent->GetHealth();
 	}
@@ -66,9 +77,18 @@ float ADOKEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 
 	HealthComponent->ApplyHealthChange(-DamageAmount);
 
+	// Hit feedback on the shooter's screen
+	if (APlayerController* PC = Cast<APlayerController>(EventInstigator))
+	{
+		if (ADOKGameHUD* HUD = PC->GetHUD<ADOKGameHUD>())
+		{
+			HUD->ShowHitMarker(bHeadshot);
+		}
+	}
+
 	if (!HealthComponent->IsDead() && !bIsCrawling)
 	{
-		PlayAnimMontage(HitReactMontage);
+		PlayEnemyMontage(HitReactMontage);
 	}
 
 	return Applied;
@@ -84,22 +104,42 @@ void ADOKEnemyCharacter::StartCrawling()
 
 void ADOKEnemyCharacter::OnPlayerSpotted()
 {
+	bChasing = true;
 	GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
 
 	if(!bIsCrawling)
 	{
-		PlayAnimMontage(DetectMontage);
+		PlayEnemyMontage(DetectMontage);
 	}
 }
 
 void ADOKEnemyCharacter::OnPlayerLost()
 {
-	GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+	bChasing = false;
+
+	if (!GetCurrentMontage())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+	}
+}
+
+void ADOKEnemyCharacter::PlayEnemyMontage(UAnimMontage* Montage)
+{
+	// Only the walk and run animations move the zombie, it stands still while a montage plays
+	if (PlayAnimMontage(Montage) > 0.0f)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+	}
+}
+
+void ADOKEnemyCharacter::OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	GetCharacterMovement()->MaxWalkSpeed = bChasing ? ChaseSpeed : PatrolSpeed;
 }
 
 void ADOKEnemyCharacter::PerformAttack()
 {
-	PlayAnimMontage(AttackMontage);
+	PlayEnemyMontage(AttackMontage);
 	GetWorldTimerManager().SetTimer(AttackHandle, this, &ADOKEnemyCharacter::DealAttackDamage, AttackHitDelay, false);
 }
 
@@ -109,10 +149,18 @@ void ADOKEnemyCharacter::DealAttackDamage()
 
 	// player should be hurt only when in reach
 	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if(Player && GetDistanceTo(Player) <= AttackRange)
+	if(IsPlayerInReach(Player, AttackRange))
 	{
 		UGameplayStatics::ApplyDamage(Player, AttackDamage, GetController(), this, UDamageType::StaticClass());
 	}
+}
+
+bool ADOKEnemyCharacter::IsPlayerInReach(AActor* Player, float Range) const
+{
+	if (!Player) return false;
+
+	const FVector ToPlayer = Player->GetActorLocation() - GetActorLocation();
+	return ToPlayer.Size2D() <= Range && FMath::Abs(ToPlayer.Z) <= AttackHeight;
 }
 
 void ADOKEnemyCharacter::HandleDied()

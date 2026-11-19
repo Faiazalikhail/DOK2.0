@@ -14,6 +14,14 @@ class UTraversalComponent;
 class UHealthComponent;
 struct FInputActionValue;
 
+UENUM(BlueprintType)
+enum class EDOKItem : uint8
+{
+	Stone,
+	Clay,
+	Dressing
+};
+
 
 UCLASS()
 class DOK2_API ADOKCharacter : public ACharacter
@@ -29,6 +37,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category ="Health")
 	TObjectPtr<UHealthComponent> HealthComponent;
+
+	void RefillItem(EDOKItem Item);
 
 protected:
 	virtual void BeginPlay() override;
@@ -117,6 +127,21 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	float CameraBlendSpeed = 10.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> SelectItemAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Items")
+	int32 MaxItemCount = 6;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Items")
+	float DressingHeal = 25.0f;
+
+	// How many stones, clay balls and dressings the player carries, in EDOKItem order
+	UPROPERTY(VisibleInstanceOnly, Category = "Items")
+	TArray<int32> ItemCounts = { 6, 6, 2 };
+
+	EDOKItem SelectedItem = EDOKItem::Stone;
+
 	bool bWantsToSprint = false;
 
 	void Move(const FInputActionValue& Value);
@@ -137,4 +162,12 @@ private:
 	void HandleDied();
 
 	void RestartLevel();
+
+	void SelectItem(const FInputActionValue& Value);
+	void UseItem();
+	void ReleaseItem();
+	void UpdateItemHUD();
+
+	UFUNCTION()
+	void HandleHealthChanged(float NewHealth, float MaxHealth);
 };

@@ -87,5 +87,12 @@ private:
 
 	void Fire();
 
+	// Arms drop to take a new stone and come back up while aim is still held
+	UPROPERTY(EditDefaultsOnly, Category = "Slingshot")
+	float ReloadTime = 0.8f;
+
+	FTimerHandle ReloadHandle;
+
+	void FinishReload();
 
 };

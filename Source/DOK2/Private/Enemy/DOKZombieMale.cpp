@@ -13,7 +13,7 @@ ADOKZombieMale::ADOKZombieMale()
 void ADOKZombieMale::PerformAttack()
 {
 	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (Player)
+	if (IsPlayerInReach(Player, AttackRange))
 	{
 		FVector Direction = Player->GetActorLocation() - GetActorLocation();
 		Direction.Z = 0.0f;

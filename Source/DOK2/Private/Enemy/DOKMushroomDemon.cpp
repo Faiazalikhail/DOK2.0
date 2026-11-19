@@ -20,7 +20,7 @@ void ADOKMushroomDemon::DealAttackDamage()
 	if (HealthComponent->IsDead()) return;
 
 	ACharacter* Player = UGameplayStatics::GetPlayerCharacter(this, 0);
-	if (!Player || GetDistanceTo(Player) > SlamRadius) return;
+	if (!IsPlayerInReach(Player, SlamRadius)) return;
 
 	UGameplayStatics::ApplyDamage(Player, AttackDamage, GetController(), this, UDamageType::StaticClass());
 

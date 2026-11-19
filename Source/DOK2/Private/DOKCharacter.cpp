@@ -65,6 +65,7 @@ void ADOKCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	HealthComponent->OnDied.AddDynamic(this, &ADOKCharacter::HandleDied);
+	HealthComponent->OnHealthChanged.AddDynamic(this, &ADOKCharacter::HandleHealthChanged);
 
 	UpdateMoveSpeed();
 
@@ -110,8 +111,9 @@ void ADOKCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInput->BindAction(AimAction, ETriggerEvent::Started, this, &ADOKCharacter::StartAim);
 		EnhancedInput->BindAction(AimAction, ETriggerEvent::Completed, this, &ADOKCharacter::StopAim);
 
-		EnhancedInput->BindAction(FireAction, ETriggerEvent::Started, Slingshot.Get(), &USlingshotComponent::StartDraw);
-		EnhancedInput->BindAction(FireAction, ETriggerEvent::Completed, Slingshot.Get(), &USlingshotComponent::Release);
+		EnhancedInput->BindAction(FireAction, ETriggerEvent::Started, this, &ADOKCharacter::UseItem);
+		EnhancedInput->BindAction(FireAction, ETriggerEvent::Completed, this, &ADOKCharacter::ReleaseItem);
+		EnhancedInput->BindAction(SelectItemAction, ETriggerEvent::Triggered, this, &ADOKCharacter::SelectItem);
 	}
 }
 
@@ -264,7 +266,7 @@ void ADOKCharacter::UpdateCamera(float DeltaSeconds)
 	FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, CameraBlendSpeed));
 
 	// Lag makes the camera trail the body; while aiming it must be locked to it
-	//CameraBoom->bEnableCameraLag = !bAiming;
+	CameraBoom->bEnableCameraLag = !bAiming;
 }
 
 float ADOKCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -274,6 +276,13 @@ float ADOKCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	if (HealthComponent->IsDead()) return Applied;
 
 	HealthComponent->ApplyHealthChange(-Applied);
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (ADOKGameHUD* HUD = PC ? PC->GetHUD<ADOKGameHUD>() : nullptr)
+	{
+		HUD->ShowDamage();
+	}
+
 	return Applied;
 }
 
@@ -291,5 +300,73 @@ void ADOKCharacter::HandleDied()
 void ADOKCharacter::RestartLevel()
 {
 	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
+}
+
+void ADOKCharacter::SelectItem(const FInputActionValue& Value)
+{
+	// Can't swap what is in the pouch while drawing
+	if (Slingshot->GetDrawProgress() > 0.0f) return;
+
+	// Mouse wheel steps through stone, clay and dressing
+	const int32 Step = Value.Get<float>() > 0.0f ? 1 : ItemCounts.Num() - 1;
+	SelectedItem = static_cast<EDOKItem>((static_cast<int32>(SelectedItem) + Step) % ItemCounts.Num());
+	UpdateItemHUD();
+}
+
+void ADOKCharacter::UseItem()
+{
+	const int32 Index = static_cast<int32>(SelectedItem);
+	if (ItemCounts[Index] <= 0) return;
+
+	if (SelectedItem == EDOKItem::Dressing)
+	{
+		if (HealthComponent->GetPercent() >= 1.0f) return;
+
+		HealthComponent->ApplyHealthChange(DressingHeal);
+		ItemCounts[Index]--;
+		UpdateItemHUD();
+		return;
+	}
+
+	Slingshot->StartDraw();
+}
+
+void ADOKCharacter::ReleaseItem()
+{
+	const ESlingshotState State = Slingshot->GetState();
+	if (State != ESlingshotState::Drawing && State != ESlingshotState::FullDraw) return;
+
+	Slingshot->Release();
+	ItemCounts[static_cast<int32>(SelectedItem)]--;
+	UpdateItemHUD();
+}
+
+void ADOKCharacter::RefillItem(EDOKItem Item)
+{
+	ItemCounts[static_cast<int32>(Item)] = MaxItemCount;
+	UpdateItemHUD();
+}
+
+void ADOKCharacter::UpdateItemHUD()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	ADOKGameHUD* HUD = PC ? PC->GetHUD<ADOKGameHUD>() : nullptr;
+
+	if (HUD && HUD->GetGameHUDWidget())
+	{
+		const int32 Index = static_cast<int32>(SelectedItem);
+		HUD->GetGameHUDWidget()->UpdateItem(Index, static_cast<float>(ItemCounts[Index]) / MaxItemCount);
+	}
+}
+
+void ADOKCharacter::HandleHealthChanged(float NewHealth, float MaxHealth)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	ADOKGameHUD* HUD = PC ? PC->GetHUD<ADOKGameHUD>() : nullptr;
+
+	if (HUD && HUD->GetGameHUDWidget())
+	{
+		HUD->GetGameHUDWidget()->UpdateHealthBar(MaxHealth > 0.0f ? NewHealth / MaxHealth : 0.0f);
+	}
 }
 

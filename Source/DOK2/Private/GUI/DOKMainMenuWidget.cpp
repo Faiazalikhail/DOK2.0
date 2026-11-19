@@ -30,6 +30,21 @@ void UDOKMainMenuWidget::NativeConstruct()
 	{
 		BackButton->OnClicked.AddDynamic(this, &UDOKMainMenuWidget::OnBackClicked);
 	}
+
+	if (ControlsButton)
+	{
+		ControlsButton->OnClicked.AddDynamic(this, &UDOKMainMenuWidget::OnControlsClicked);
+	}
+
+	if (AimButton)
+	{
+		AimButton->OnClicked.AddDynamic(this, &UDOKMainMenuWidget::OnAimClicked);
+	}
+
+	if (ItemsButton)
+	{
+		ItemsButton->OnClicked.AddDynamic(this, &UDOKMainMenuWidget::OnItemsClicked);
+	}
 }
 
 void UDOKMainMenuWidget::OnStartClicked()
@@ -45,6 +60,22 @@ void UDOKMainMenuWidget::OnQuitClicked()
 void UDOKMainMenuWidget::OnInstructionsClicked()
 {
 	if (Screens) Screens->SetActiveWidgetIndex(1);
+	OnControlsClicked();
+}
+
+void UDOKMainMenuWidget::OnControlsClicked()
+{
+	if (Pages) Pages->SetActiveWidgetIndex(0);
+}
+
+void UDOKMainMenuWidget::OnAimClicked()
+{
+	if (Pages) Pages->SetActiveWidgetIndex(1);
+}
+
+void UDOKMainMenuWidget::OnItemsClicked()
+{
+	if (Pages) Pages->SetActiveWidgetIndex(2);
 }
 
 void UDOKMainMenuWidget::OnBackClicked()

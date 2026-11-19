@@ -52,6 +52,12 @@ void ADOKStone::Launch(const FVector& Velocity)
 {
 	// Don't collide with the person who fired it
 	Collision->IgnoreActorWhenMoving(GetInstigator(), true);
+
+	// And the shooter ignores the stone, otherwise it spawns inside their capsule and pushes them
+	if (UPrimitiveComponent* ShooterRoot = Cast<UPrimitiveComponent>(GetInstigator()->GetRootComponent()))
+	{
+		ShooterRoot->IgnoreActorWhenMoving(this, true);
+	}
 	Movement->Velocity = Velocity;
 }
 

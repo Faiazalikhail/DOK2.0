@@ -38,6 +38,19 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> BackButton;
 
+	// Instruction pages
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidgetSwitcher> Pages;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> ControlsButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> AimButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> ItemsButton;
+
 	UFUNCTION()
 	void OnStartClicked();
 
@@ -49,6 +62,15 @@ protected:
 
 	UFUNCTION()
 	void OnBackClicked();
+
+	UFUNCTION()
+	void OnControlsClicked();
+
+	UFUNCTION()
+	void OnAimClicked();
+
+	UFUNCTION()
+	void OnItemsClicked();
 
 
 };
