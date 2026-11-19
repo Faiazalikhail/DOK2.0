@@ -2,11 +2,13 @@
 
 
 #include "Enemy/DOKEnemyAIController.h"
+#include "Enemy/DOKEnemyCharacter.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "DOKCharacter.h"
 #include "TimerManager.h"
+
 
 ADOKEnemyAIController::ADOKEnemyAIController()
 {
@@ -48,10 +50,23 @@ void ADOKEnemyAIController::OnSeePlayer(APawn* SeenPawn)
 
 void ADOKEnemyAIController::SetCanSeePlayer(bool bCanSee, AActor* Player)
 {
-	if(UBlackboardComponent* BB = GetBlackboardComponent())
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB) return;
+
+	ADOKEnemyCharacter* Enemy = Cast<ADOKEnemyCharacter>(GetPawn());
+	if(Enemy && bCanSee != BB->GetValueAsBool(CanSeePlayerKey))
 	{
-		BB->SetValueAsBool(CanSeePlayerKey, bCanSee);
-		BB->SetValueAsObject(PlayerTargetKey, Player);
+		if(bCanSee)
+		{
+			Enemy->OnPlayerSpotted();
+		}
+		else
+		{
+			Enemy->OnPlayerLost();
+		}
 	}
+
+	BB->SetValueAsBool(CanSeePlayerKey, bCanSee);
+	BB->SetValueAsObject(PlayerTargetKey, Player);
 }
 

@@ -81,6 +81,21 @@ void ADOKEnemyCharacter::StartCrawling()
 	Crouch();
 }
 
+void ADOKEnemyCharacter::OnPlayerSpotted()
+{
+	GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
+
+	if(!bIsCrawling)
+	{
+		PlayAnimMontage(DetectMontage);
+	}
+}
+
+void ADOKEnemyCharacter::OnPlayerLost()
+{
+	GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+}
+
 void ADOKEnemyCharacter::HandleDied()
 {
 	GetCharacterMovement()->DisableMovement();
