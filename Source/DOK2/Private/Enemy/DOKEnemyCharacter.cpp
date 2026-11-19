@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/DamageEvents.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ADOKEnemyCharacter::ADOKEnemyCharacter()
@@ -94,6 +95,24 @@ void ADOKEnemyCharacter::OnPlayerSpotted()
 void ADOKEnemyCharacter::OnPlayerLost()
 {
 	GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+}
+
+void ADOKEnemyCharacter::PerformAttack()
+{
+	PlayAnimMontage(AttackMontage);
+	GetWorldTimerManager().SetTimer(AttackHandle, this, &ADOKEnemyCharacter::DealAttackDamage, AttackHitDelay, false);
+}
+
+void ADOKEnemyCharacter::DealAttackDamage()
+{
+	if (HealthComponent->IsDead()) return;
+
+	// player should be hurt only when in reach
+	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if(Player && GetDistanceTo(Player) <= AttackRange)
+	{
+		UGameplayStatics::ApplyDamage(Player, AttackDamage, GetController(), this, UDamageType::StaticClass());
+	}
 }
 
 void ADOKEnemyCharacter::HandleDied()

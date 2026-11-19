@@ -23,6 +23,9 @@ public:
 	virtual void OnPlayerSpotted();
 	void OnPlayerLost();
 
+	virtual void PerformAttack();
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy")
 	TObjectPtr<UHealthComponent> HealthComponent;
 
@@ -51,6 +54,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Damage")
 	float DeathImpulse = 400.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
+	float AttackDamage = 20.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
+	float AttackRange = 200.0f;
+
+	// time from the stat of attack montage to the when hit lands
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
+	float AttackHitDelay = 0.5f;
+
+	void DealAttackDamage();
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Animation")
 	TObjectPtr<UAnimMontage> DetectMontage;
 
@@ -63,6 +78,8 @@ protected:
 private:
 	FName LastHitBone;
 	FVector LastHitDirection = FVector::ZeroVector;
+
+	FTimerHandle AttackHandle;
 
 	void StartCrawling();
 };
