@@ -64,7 +64,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Attack")
 	float AttackHitDelay = 0.5f;
 
-	void DealAttackDamage();
+	virtual void DealAttackDamage();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Animation")
 	TObjectPtr<UAnimMontage> DetectMontage;
