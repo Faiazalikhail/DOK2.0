@@ -11,7 +11,9 @@ class UInputAction;
 class UPoseableMeshComponent;
 class USlingshotComponent;
 class UTraversalComponent;
+class UHealthComponent;
 struct FInputActionValue;
+
 
 UCLASS()
 class DOK2_API ADOKCharacter : public ACharacter
@@ -22,6 +24,11 @@ public:
 	ADOKCharacter();
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category ="Health")
+	TObjectPtr<UHealthComponent> HealthComponent;
 
 protected:
 	virtual void BeginPlay() override;
@@ -64,6 +71,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTraversalComponent> Traversal;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	float RestartDelay = 3.0f;
+
+	FTimerHandle RestartHandle;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> CrouchAction;
@@ -120,4 +132,9 @@ private:
 	void UpdateMoveSpeed();
 	void UpdatePouch();
 	void UpdateCamera(float DeltaSeconds);
+
+	UFUNCTION()
+	void HandleDied();
+
+	void RestartLevel();
 };

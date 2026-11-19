@@ -3,6 +3,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Components/HealthComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
@@ -14,6 +15,7 @@
 #include "TraversalComponent.h"
 #include "HUD/DOKGameHUD.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Kismet/GameplayStatics.h"
 
 ADOKCharacter::ADOKCharacter()
 {
@@ -52,6 +54,8 @@ ADOKCharacter::ADOKCharacter()
 
 	Traversal = CreateDefaultSubobject<UTraversalComponent>(TEXT("Traversal"));
 
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 }
@@ -59,6 +63,8 @@ ADOKCharacter::ADOKCharacter()
 void ADOKCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	HealthComponent->OnDied.AddDynamic(this, &ADOKCharacter::HandleDied);
 
 	UpdateMoveSpeed();
 
@@ -260,3 +266,30 @@ void ADOKCharacter::UpdateCamera(float DeltaSeconds)
 	// Lag makes the camera trail the body; while aiming it must be locked to it
 	//CameraBoom->bEnableCameraLag = !bAiming;
 }
+
+float ADOKCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (HealthComponent->IsDead()) return Applied;
+
+	HealthComponent->ApplyHealthChange(-Applied);
+	return Applied;
+}
+
+void ADOKCharacter::HandleDied()
+{
+	DisableInput(Cast<APlayerController>(GetController()));
+	GetCharacterMovement()->DisableMovement();
+
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+
+	GetWorldTimerManager().SetTimer(RestartHandle, this, &ADOKCharacter::RestartLevel, RestartDelay, false);
+}
+
+void ADOKCharacter::RestartLevel()
+{
+	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
+}
+

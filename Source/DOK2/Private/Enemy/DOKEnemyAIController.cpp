@@ -48,6 +48,18 @@ void ADOKEnemyAIController::OnSeePlayer(APawn* SeenPawn)
 		PawnSensing->SensingInterval * 2.0f, false);
 }
 
+void ADOKEnemyAIController::HearAlert(APawn* Player)
+{
+	SetCanSeePlayer(true, Player);
+
+	GetWorldTimerManager().SetTimer(ForgetHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				SetCanSeePlayer(false, nullptr);
+			}),
+		AlertMemory, false);
+}
+
 void ADOKEnemyAIController::SetCanSeePlayer(bool bCanSee, AActor* Player)
 {
 	UBlackboardComponent* BB = GetBlackboardComponent();

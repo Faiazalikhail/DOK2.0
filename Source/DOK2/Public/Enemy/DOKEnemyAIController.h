@@ -22,6 +22,8 @@ public:
 
 	ADOKEnemyAIController();
 
+	void HearAlert(APawn* Player);
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -37,6 +39,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category ="AI")
 	FName PlayerTargetKey = TEXT("PlayerTarget");
+
+	// How long a zombie keeps chasing after hearing a scream, without seeing the player
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float AlertMemory = 5.0f;
 
 	UFUNCTION()
 	void OnSeePlayer(APawn* SeenPawn);
